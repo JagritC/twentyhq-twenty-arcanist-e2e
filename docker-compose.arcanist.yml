@@ -1,0 +1,56 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: default
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d default"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    volumes:
+      - arcanist-postgres:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    command: ["--maxmemory-policy", "noeviction"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    volumes:
+      - arcanist-redis:/data
+
+  web:
+    image: node:24-bookworm
+    init: true
+    working_dir: /app
+    command: ["bash", "scripts/arcanist-runtime-start.sh"]
+    environment:
+      CI: "1"
+      COREPACK_ENABLE_DOWNLOAD_PROMPT: "0"
+      HUSKY: "0"
+      NX_DAEMON: "false"
+      YARN_ENABLE_HARDENED_MODE: "0"
+      YARN_ENABLE_TELEMETRY: "0"
+    ports:
+      - "3000:3000"
+      - "3001:3001"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - .:/app
+      - arcanist-node-modules:/app/node_modules
+      - arcanist-yarn-cache:/root/.yarn
+
+volumes:
+  arcanist-node-modules:
+  arcanist-postgres:
+  arcanist-redis:
+  arcanist-yarn-cache:
