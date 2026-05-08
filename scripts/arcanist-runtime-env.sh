@@ -24,5 +24,6 @@ ENV
 cat >packages/twenty-front/.env <<'ENV'
 REACT_APP_SERVER_BASE_URL=http://localhost:3000
 REACT_APP_PORT=3001
+VITE_HOST=0.0.0.0
 VITE_BUILD_SOURCEMAP=false
 ENV
